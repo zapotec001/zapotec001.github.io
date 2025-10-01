@@ -1,15 +1,28 @@
-function updateClock() {
-    var now = new Date();
-    var hours = now.getHours();
-    var minutes = now.getMinutes();
-    var seconds = now.getSeconds();
+document.addEventListener("scroll", () => {
+    const nav = document.querySelector(".nav");
+    if (!nav) return;
 
-    hours = hours.toString().padStart(2, '0');
-    minutes = minutes.toString().padStart(2, '0');
-    seconds = seconds.toString().padStart(2, '0');
+    if (window.scrollY > 40) {
+        nav.classList.add("nav--scrolled");
+    } else {
+        nav.classList.remove("nav--scrolled");
+    }
+});
 
-    var timeString = hours + ':' + minutes + ':' + seconds;
-    document.getElementById('clock').textContent = timeString;
-}
+// Add a small fade-in effect for cards
+const observer = new IntersectionObserver(
+    (entries) => {
+        entries.forEach((entry) => {
+            if (entry.isIntersecting) {
+                entry.target.classList.add("is-visible");
+                observer.unobserve(entry.target);
+            }
+        });
+    },
+    { threshold: 0.2 }
+);
 
-setInterval(updateClock, 1000);
+document.querySelectorAll(".event-card").forEach((card) => {
+    card.classList.add("will-animate");
+    observer.observe(card);
+});
