@@ -2,6 +2,19 @@ const nav = document.querySelector(".nav");
 let statusElement = document.getElementById("status");
 const eventsContainer = document.getElementById("events");
 const todayElement = document.querySelector("[data-date]");
+const refreshButton = document.querySelector("[data-refresh]");
+const refreshDefaultLabel = refreshButton?.textContent?.trim() || "";
+
+const LENGTH_LIMIT = 240;
+const MAX_EVENTS = 9;
+const CATEGORY_LABELS = {
+    selected: "Öne Çıkanlar",
+    events: "Olay",
+    births: "Doğum",
+    deaths: "Ölüm",
+    holidays: "Özel Gün",
+    observances: "Anma",
+};
 
 const observer = new IntersectionObserver(
     (entries) => {
@@ -47,6 +60,17 @@ function showStatus(title, message, role = "status") {
     statusElement.setAttribute("role", role);
 }
 
+function setRefreshLoading(isLoading) {
+    if (!refreshButton) return;
+    refreshButton.disabled = isLoading;
+    refreshButton.classList.toggle("is-loading", isLoading);
+    if (refreshDefaultLabel) {
+        refreshButton.textContent = isLoading
+            ? "Yenileniyor..."
+            : refreshDefaultLabel;
+    }
+}
+
 function clearStatus() {
     if (statusElement) {
         statusElement.remove();
@@ -54,19 +78,36 @@ function clearStatus() {
     }
 }
 
+function formatCategory(category) {
+    if (!category) return "";
+    return CATEGORY_LABELS[category] || category;
+}
+
 function createEventCard(event) {
     const article = document.createElement("article");
     article.className = "event-card will-animate";
 
-    const year = document.createElement("div");
+    const meta = document.createElement("header");
+    meta.className = "event-meta";
+
+    if (event.category) {
+        const badge = document.createElement("span");
+        badge.className = `event-category event-category--${event.category}`;
+        badge.textContent = formatCategory(event.category);
+        meta.appendChild(badge);
+    }
+
+    const year = document.createElement("span");
     year.className = "event-year";
     year.textContent = event.year ?? "";
+    meta.appendChild(year);
+
+    article.appendChild(meta);
 
     const text = document.createElement("p");
     text.className = "event-text";
     text.textContent = event.text ?? "";
 
-    article.appendChild(year);
     if (event.image?.src) {
         const figure = document.createElement("figure");
         figure.className = "event-media";
@@ -138,8 +179,9 @@ async function loadEvents(referenceDate = new Date()) {
 
     const month = referenceDate.getMonth() + 1;
     const day = referenceDate.getDate();
-    const endpoint = `https://tr.wikipedia.org/api/rest_v1/feed/onthisday/events/${month}/${day}`;
+    const endpoint = `https://tr.wikipedia.org/api/rest_v1/feed/onthisday/all/${month}/${day}`;
 
+    setRefreshLoading(true);
     try {
         const response = await fetch(endpoint, {
             headers: {
@@ -153,14 +195,40 @@ async function loadEvents(referenceDate = new Date()) {
         }
 
         const data = await response.json();
-        const events = Array.isArray(data.events) ? data.events : [];
+        const categories = [
+            { key: "selected", items: data.selected },
+            { key: "events", items: data.events },
+            { key: "births", items: data.births },
+            { key: "deaths", items: data.deaths },
+            { key: "holidays", items: data.holidays },
+            { key: "observances", items: data.observances },
+        ];
 
-        const sorted = events
-            .filter((event) => event.text)
-            .sort((a, b) => (b.year || 0) - (a.year || 0))
-            .slice(0, 4);
+        const aggregated = categories.flatMap(({ key, items }) => {
+            if (!Array.isArray(items)) return [];
+            return items.map((item) => ({ ...item, category: key }));
+        });
 
-        if (sorted.length === 0) {
+        const filtered = aggregated
+            .filter((event) => {
+                const text = event?.text?.trim();
+                return text && text.length <= LENGTH_LIMIT;
+            })
+            .sort((a, b) => (b.year || 0) - (a.year || 0));
+
+        const deduplicated = [];
+        const seen = new Set();
+        for (const event of filtered) {
+            const key = `${event.year || "unknown"}-${event.text}`.toLowerCase();
+            if (seen.has(key)) continue;
+            seen.add(key);
+            deduplicated.push(event);
+            if (deduplicated.length >= MAX_EVENTS) {
+                break;
+            }
+        }
+
+        if (deduplicated.length === 0) {
             showStatus(
                 "Olay bulunamadı",
                 "Bugün için Wikipedia'da listelenen olay yok.",
@@ -170,7 +238,7 @@ async function loadEvents(referenceDate = new Date()) {
         }
 
         clearStatus();
-        const normalisedEvents = sorted.map((event) => {
+        const normalisedEvents = deduplicated.map((event) => {
             const pages = Array.isArray(event.pages)
                 ? event.pages
                       .map((page) => {
@@ -198,20 +266,37 @@ async function loadEvents(referenceDate = new Date()) {
                       .filter(Boolean)
                 : [];
 
-            const primaryImage = pages.find((page) => page.imageSource);
+            const directImageSrc =
+                event?.originalimage?.source || event?.thumbnail?.source || "";
+            const directImageUrl =
+                event?.content_urls?.desktop?.page || event?.content_urls?.mobile?.page || "";
+
+            let image = null;
+            if (directImageSrc) {
+                image = {
+                    src: directImageSrc,
+                    alt: event.text?.trim() || "Olay görseli",
+                    url: directImageUrl || pages[0]?.url || null,
+                    caption: event?.extract ? event.extract.trim() : null,
+                };
+            } else {
+                const pageWithImage = pages.find((page) => page.imageSource);
+                if (pageWithImage) {
+                    image = {
+                        src: pageWithImage.imageSource,
+                        alt: pageWithImage.title,
+                        url: pageWithImage.url,
+                        caption: pageWithImage.description || null,
+                    };
+                }
+            }
 
             return {
                 year: event.year,
                 text: event.text?.trim() || "",
-                pages: pages.slice(0, 2).map(({ title, url }) => ({ title, url })),
-                image: primaryImage
-                    ? {
-                          src: primaryImage.imageSource,
-                          alt: primaryImage.title,
-                          url: primaryImage.url,
-                          caption: primaryImage.description || null,
-                      }
-                    : null,
+                category: event.category,
+                pages: pages.slice(0, 3).map(({ title, url }) => ({ title, url })),
+                image,
             };
         });
 
@@ -226,6 +311,8 @@ async function loadEvents(referenceDate = new Date()) {
             "Şu anda Wikipedia verilerine erişilemiyor. Lütfen daha sonra tekrar deneyin.",
             "alert"
         );
+    } finally {
+        setRefreshLoading(false);
     }
 }
 
@@ -236,4 +323,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     updateNavOnScroll();
     loadEvents(now);
+    refreshButton?.addEventListener("click", () => {
+        const refreshedDate = new Date();
+        if (todayElement) {
+            todayElement.textContent = formatDate(refreshedDate);
+        }
+        loadEvents(refreshedDate);
+    });
 });

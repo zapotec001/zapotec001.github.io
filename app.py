@@ -8,8 +8,17 @@ from flask import Flask, render_template
 
 app = Flask(__name__)
 
-API_URL = "https://tr.wikipedia.org/api/rest_v1/feed/onthisday/events/{month}/{day}"
-USER_AGENT = "TarihteBugunApp/1.0 (https://github.com/zapotec001)"
+API_URL = "https://tr.wikipedia.org/api/rest_v1/feed/onthisday/all/{month}/{day}"
+USER_AGENT = "TarihteBugunApp/2.0 (https://github.com/zapotec001)"
+CATEGORIES = ("selected", "events", "births", "deaths", "holidays", "observances")
+CATEGORY_LABELS = {
+    "selected": "Öne Çıkanlar",
+    "events": "Olay",
+    "births": "Doğum",
+    "deaths": "Ölüm",
+    "holidays": "Özel Gün",
+    "observances": "Anma",
+}
 MONTH_NAMES_TR = [
     "Ocak",
     "Şubat",
@@ -24,6 +33,8 @@ MONTH_NAMES_TR = [
     "Kasım",
     "Aralık",
 ]
+MAX_EVENTS = 9
+LENGTH_LIMIT = 240
 
 
 def _normalise_title(value: Optional[str]) -> str:
@@ -32,8 +43,37 @@ def _normalise_title(value: Optional[str]) -> str:
     return " ".join(value.split())
 
 
-def fetch_today_events(limit: int = 4) -> List[Dict[str, Any]]:
-    """Fetch notable events for today's date from Wikipedia."""
+def _normalise_pages(pages: Optional[List[Dict[str, Any]]]) -> List[Dict[str, str]]:
+    normalised: List[Dict[str, str]] = []
+    for page in pages or []:
+        content_urls = page.get("content_urls") or {}
+        desktop_url = (content_urls.get("desktop") or {}).get("page")
+        mobile_url = (content_urls.get("mobile") or {}).get("page")
+        url = desktop_url or mobile_url
+        title = _normalise_title((page.get("titles") or {}).get("display") or page.get("title"))
+
+        if not url or not title:
+            continue
+
+        description = _normalise_title(page.get("description"))
+        image_source = (page.get("originalimage") or {}).get("source") or (
+            (page.get("thumbnail") or {}).get("source")
+        )
+
+        normalised.append(
+            {
+                "title": title,
+                "url": url,
+                "description": description,
+                "image_source": image_source or "",
+            }
+        )
+    return normalised
+
+
+def fetch_today_events(limit: int = MAX_EVENTS, max_length: int = LENGTH_LIMIT) -> List[Dict[str, Any]]:
+    """Fetch notable events for today's date from Wikipedia and normalise them."""
+
     today = datetime.utcnow()
     url = API_URL.format(month=today.month, day=today.day)
 
@@ -52,59 +92,71 @@ def fetch_today_events(limit: int = 4) -> List[Dict[str, Any]]:
     except (URLError, HTTPError, ValueError):
         return []
 
-    events = data.get("events", [])
-
-    # Sort by the year descending so the most recent events appear first
-    events.sort(key=lambda event: event.get("year", 0), reverse=True)
-
-    formatted_events = []
-    for event in events:
-        text = _normalise_title(event.get("text"))
-        if not text:
-            continue
-
-        page_links: List[Dict[str, str]] = []
-        primary_image: Optional[Dict[str, Any]] = None
-
-        for page in event.get("pages", []):
-            content_urls = (page.get("content_urls") or {}).get("desktop") or {}
-            desktop_url = content_urls.get("page")
-            title = _normalise_title((page.get("titles") or {}).get("display") or page.get("title"))
-
-            if not desktop_url or not title:
+    aggregated: List[Dict[str, Any]] = []
+    for category in CATEGORIES:
+        for event in data.get(category, []) or []:
+            text = _normalise_title(event.get("text"))
+            if not text or len(text) > max_length:
                 continue
+            aggregated.append({"category": category, "event": event, "text": text})
 
-            description = _normalise_title(page.get("description"))
-            image_url = (page.get("originalimage") or {}).get("source") or (
-                (page.get("thumbnail") or {}).get("source")
-            )
+    aggregated.sort(key=lambda item: item["event"].get("year", 0), reverse=True)
 
-            page_links.append({"title": title, "url": desktop_url})
+    normalised_events: List[Dict[str, Any]] = []
+    seen = set()
 
-            if not primary_image and image_url:
-                primary_image = {
-                    "src": image_url,
-                    "alt": title,
-                    "url": desktop_url,
-                    "caption": description or None,
+    for item in aggregated:
+        event = item["event"]
+        year = event.get("year")
+        text = item["text"]
+        dedup_key = f"{year}-{text}".lower()
+        if dedup_key in seen:
+            continue
+        seen.add(dedup_key)
+
+        pages = _normalise_pages(event.get("pages"))
+        content_urls = event.get("content_urls") or {}
+        direct_image_src = (event.get("originalimage") or {}).get("source") or (
+            (event.get("thumbnail") or {}).get("source")
+        )
+        direct_image_url = (content_urls.get("desktop") or {}).get("page") or (
+            (content_urls.get("mobile") or {}).get("page")
+        )
+        extract = _normalise_title(event.get("extract"))
+
+        image: Optional[Dict[str, Optional[str]]] = None
+        if direct_image_src:
+            image = {
+                "src": direct_image_src,
+                "alt": text,
+                "url": direct_image_url or (pages[0]["url"] if pages else None),
+                "caption": extract or None,
+            }
+        else:
+            page_with_image = next((page for page in pages if page.get("image_source")), None)
+            if page_with_image:
+                image = {
+                    "src": page_with_image["image_source"],
+                    "alt": page_with_image["title"],
+                    "url": page_with_image["url"],
+                    "caption": page_with_image["description"] or None,
                 }
 
-            if len(page_links) >= 2 and primary_image:
-                break
-
-        formatted_events.append(
+        normalised_events.append(
             {
-                "year": event.get("year"),
+                "year": year,
                 "text": text,
-                "pages": page_links[:2],
-                "image": primary_image,
+                "category": item["category"],
+                "category_label": CATEGORY_LABELS.get(item["category"], item["category"]),
+                "pages": [{"title": page["title"], "url": page["url"]} for page in pages[:3]],
+                "image": image,
             }
         )
 
-        if len(formatted_events) >= limit:
+        if len(normalised_events) >= limit:
             break
 
-    return formatted_events
+    return normalised_events
 
 
 @app.route("/")

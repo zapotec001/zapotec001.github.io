@@ -18,7 +18,10 @@
         </nav>
         <div class="hero-content">
             <h1>Bugün Tarihte Neler Oldu?</h1>
-            <p>Wikipedia'nın "Tarihte Bugün" arşivinden seçtiğimiz olayları keşfedin.</p>
+            <p>Wikipedia'nın "Tarihte Bugün" arşivinden reklam içermeyen, kısa ve anlaşılır başlıca olayları keşfedin.</p>
+            <button class="refresh" type="button" data-refresh>
+                Bugünün olaylarını yenile
+            </button>
         </div>
     </header>
 
@@ -27,7 +30,12 @@
             {% if events %}
                 {% for event in events %}
                     <article class="event-card">
-                        <div class="event-year">{{ event.year }}</div>
+                        <header class="event-meta">
+                            {% if event.category_label %}
+                                <span class="event-category event-category--{{ event.category }}">{{ event.category_label }}</span>
+                            {% endif %}
+                            <span class="event-year">{{ event.year }}</span>
+                        </header>
                         {% if event.image %}
                             <figure class="event-media">
                                 {% if event.image.url %}
@@ -65,7 +73,7 @@
                     </article>
                 {% endfor %}
             {% else %}
-                <div class="empty-state">
+                <div class="empty-state" id="status" role="status">
                     <h2>Olaylar yüklenemedi</h2>
                     <p>Şu anda Wikipedia verilerine erişilemiyor. Lütfen daha sonra tekrar deneyin.</p>
                 </div>
