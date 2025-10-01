@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tarihte Bugün</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
+    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
+</head>
+<body>
+    <header class="hero">
+        <nav class="nav">
+            <div class="logo">Tarihte Bugün</div>
+            <div class="today">{{ date_string }}</div>
+        </nav>
+        <div class="hero-content">
+            <h1>Bugün Tarihte Neler Oldu?</h1>
+            <p>Wikipedia'nın "Tarihte Bugün" arşivinden seçtiğimiz olayları keşfedin.</p>
+        </div>
+    </header>
+
+    <main>
+        <section class="events">
+            {% if events %}
+                {% for event in events %}
+                    <article class="event-card">
+                        <div class="event-year">{{ event.year }}</div>
+                        <p class="event-text">{{ event.text }}</p>
+                        {% if event.pages %}
+                            <div class="event-links" aria-label="Daha fazla bilgi">
+                                {% for page in event.pages %}
+                                    <a href="{{ page.url }}" target="_blank" rel="noopener" class="event-link">{{ page.title }}</a>
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </article>
+                {% endfor %}
+            {% else %}
+                <div class="empty-state">
+                    <h2>Olaylar yüklenemedi</h2>
+                    <p>Şu anda Wikipedia verilerine erişilemiyor. Lütfen daha sonra tekrar deneyin.</p>
+                </div>
+            {% endif %}
+        </section>
+    </main>
+
+    <footer>
+        <p>Veriler <a href="https://www.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a>'dan alınmıştır.</p>
+    </footer>
+</body>
+</html>
