@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+{% if event %}
+  {% set page_title = 'İçeriği Düzenle' %}
+{% else %}
+  {% set page_title = 'Yeni İçerik Ekle' %}
+{% endif %}
+
+{% block title %}{{ page_title }} - Tarihte Bugün{% endblock %}
+
+{% block content %}
+<section class="editor" data-animate>
+  <div class="editor__header glass">
+    <h1>{{ page_title }}</h1>
+    <p>Başlığı, özeti, görselleri ve bağlantıları düzenleyebilir, yeni içerikler ekleyebilirsiniz.</p>
+  </div>
+  <form method="post" class="form glass editor__form">
+    <div class="form__grid">
+      <label class="form__field">
+        <span>Başlık</span>
+        <input type="text" name="title" value="{{ event.title if event else '' }}" required />
+      </label>
+      <label class="form__field">
+        <span>Yıl</span>
+        <input type="number" name="year" value="{{ event.year if event and event.year else '' }}" min="-5000" max="{{ datetime.utcnow().year }}" />
+      </label>
+      <label class="form__field">
+        <span>Kategori</span>
+        <select name="category">
+          {% for key, label in categories.items() %}
+          <option value="{{ key }}" {% if event and event.category == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label class="form__field">
+        <span>Görünecek Tarih</span>
+        <input type="text" name="date_label" value="{{ event.date_label if event else today_label }}" placeholder="Örn. 05 Nisan 2024" />
+      </label>
+    </div>
+
+    <label class="form__field">
+      <span>Özet</span>
+      <textarea name="summary" rows="4" required>{{ event.summary if event else '' }}</textarea>
+    </label>
+
+    <fieldset class="form__fieldset">
+      <legend>Kaynak Bilgileri</legend>
+      <div class="form__grid">
+        <label class="form__field">
+          <span>Kaynak Başlığı</span>
+          <input type="text" name="source_title" value="{{ event.source_title if event else '' }}" />
+        </label>
+        <label class="form__field">
+          <span>Kaynak URL</span>
+          <input type="url" name="source_url" value="{{ event.source_url if event else '' }}" />
+        </label>
+      </div>
+    </fieldset>
+
+    <fieldset class="form__fieldset">
+      <legend>Görsel</legend>
+      <div class="form__grid">
+        <label class="form__field">
+          <span>Görsel URL</span>
+          <input type="url" name="image_url" value="{{ event.image_url if event else '' }}" />
+        </label>
+        <label class="form__field">
+          <span>Görsel Açıklaması</span>
+          <input type="text" name="image_caption" value="{{ event.image_caption if event else '' }}" />
+        </label>
+        <label class="form__field">
+          <span>Görsel Kaynak URL</span>
+          <input type="url" name="image_credit_url" value="{{ event.image_credit_url if event else '' }}" />
+        </label>
+      </div>
+      {% if event and event.image_url %}
+      <div class="preview">
+        <img src="{{ event.image_url }}" alt="{{ event.title }}" loading="lazy" />
+      </div>
+      {% endif %}
+    </fieldset>
+
+    <div class="form__actions">
+      <a class="button button--ghost" href="{{ url_for('admin_dashboard') }}">Vazgeç</a>
+      <button type="submit" class="button">Kaydet</button>
+    </div>
+  </form>
+</section>
+{% endblock %}

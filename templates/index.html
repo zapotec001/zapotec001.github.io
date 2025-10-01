@@ -1,88 +1,104 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarihte Bugün</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='style.css') }}">
-    <script defer src="{{ url_for('static', filename='script.js') }}"></script>
-</head>
-<body>
-    <header class="hero">
-        <nav class="nav">
-            <div class="logo">Tarihte Bugün</div>
-            <div class="today" data-date>{{ date_string }}</div>
-        </nav>
-        <div class="hero-content">
-            <h1>Bugün Tarihte Neler Oldu?</h1>
-            <p>Wikipedia'nın "Tarihte Bugün" arşivinden reklam içermeyen, kısa ve anlaşılır başlıca olayları keşfedin.</p>
-            <button class="refresh" type="button" data-refresh>
-                Bugünün olaylarını yenile
-            </button>
-        </div>
-    </header>
+{% extends "base.html" %}
 
-    <main>
-        <section class="events" id="events" aria-live="polite">
-            {% if events %}
-                {% for event in events %}
-                    <article class="event-card">
-                        <header class="event-meta">
-                            {% if event.category_label %}
-                                <span class="event-category event-category--{{ event.category }}">{{ event.category_label }}</span>
-                            {% endif %}
-                            <span class="event-year">{{ event.year }}</span>
-                        </header>
-                        {% if event.image %}
-                            <figure class="event-media">
-                                {% if event.image.url %}
-                                    <a
-                                        href="{{ event.image.url }}"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="event-image-link"
-                                    >
-                                        <img src="{{ event.image.src }}" alt="{{ event.image.alt }}" loading="lazy" />
-                                    </a>
-                                {% else %}
-                                    <img src="{{ event.image.src }}" alt="{{ event.image.alt }}" loading="lazy" />
-                                {% endif %}
-                                {% if event.image.caption %}
-                                    <figcaption>{{ event.image.caption }}</figcaption>
-                                {% endif %}
-                            </figure>
-                        {% endif %}
-                        <p class="event-text">{{ event.text }}</p>
-                        {% if event.pages %}
-                            <div class="event-links" aria-label="Daha fazla bilgi">
-                                {% for page in event.pages %}
-                                    <a
-                                        href="{{ page.url }}"
-                                        target="_blank"
-                                        rel="noopener"
-                                        class="event-link"
-                                    >
-                                        {{ page.title }}
-                                    </a>
-                                {% endfor %}
-                            </div>
-                        {% endif %}
-                    </article>
-                {% endfor %}
-            {% else %}
-                <div class="empty-state" id="status" role="status">
-                    <h2>Olaylar yüklenemedi</h2>
-                    <p>Şu anda Wikipedia verilerine erişilemiyor. Lütfen daha sonra tekrar deneyin.</p>
-                </div>
-            {% endif %}
-        </section>
-    </main>
+{% block title %}Tarihte Bugün - Bugün Neler Oldu?{% endblock %}
 
-    <footer>
-        <p>Veriler <a href="https://www.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a>'dan alınmıştır.</p>
-    </footer>
-</body>
-</html>
+{% block content %}
+<section class="hero" data-animate>
+  <div class="hero__content">
+    <p class="hero__eyebrow">{{ today_label }}</p>
+    <h1>Tarihte Bugün Neler Oldu?</h1>
+    <p class="hero__lead">
+      Türkçe Wikipedia kayıtlarından derlenen öne çıkan olayları her gün şeffaf
+      bir tasarımda sunuyoruz. Yönetim paneliyle içerikleri dilediğiniz gibi
+      düzenleyebilir, yeni detaylar ekleyebilirsiniz.
+    </p>
+    <div class="hero__meta">
+      {% if last_refreshed_human %}
+      <span class="meta-item">
+        <strong>Son güncelleme:</strong>
+        <span>{{ last_refreshed_human }}</span>
+      </span>
+      {% endif %}
+      <span class="meta-item">
+        <strong>İçerik sayısı:</strong>
+        <span>{{ events|length }}</span>
+      </span>
+      <span class="meta-item">
+        <strong>Şu an saat:</strong>
+        <span data-clock aria-live="polite">--:--</span>
+      </span>
+    </div>
+    <div class="hero__actions">
+      <a class="button" href="#icerikler">Olayları keşfet</a>
+      <a class="button button--ghost" href="{{ url_for('admin_login') }}">
+        Yönetim girişi
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="events" id="icerikler">
+  <div class="section-heading" data-animate>
+    <h2>Bugünün Öne Çıkanları</h2>
+    <p>
+      Aşağıdaki içerikler otomatik olarak Wikipedia’dan alınır ve yönetici
+      panelinden düzenlenebilir. Uzun metinler filtrelenir, bağlantılar temizlenir
+      ve mümkün olduğunda görseller eklenir.
+    </p>
+  </div>
+
+  {% if events %}
+  <div class="events__grid">
+    {% for event in events %}
+    <article class="event-card glass" data-animate>
+      <header class="event-card__header">
+        <span class="event-card__badge">{{ event.category_label }}</span>
+        {% if event.year %}
+        <span class="event-card__year">{{ event.year }}</span>
+        {% endif %}
+      </header>
+
+      {% if event.image_url %}
+      <figure class="event-card__figure">
+        <img src="{{ event.image_url }}" alt="{{ event.title }}" loading="lazy" />
+        {% if event.image_caption %}
+        <figcaption>{{ event.image_caption }}</figcaption>
+        {% endif %}
+      </figure>
+      {% endif %}
+
+      <div class="event-card__body">
+        <h3>{{ event.title }}</h3>
+        <p>{{ event.summary }}</p>
+        {% if event.date_label %}
+        <p class="event-card__date">{{ event.date_label }}</p>
+        {% endif %}
+      </div>
+
+      <footer class="event-card__footer">
+        {% if event.source_url %}
+        <a class="button button--link" href="{{ event.source_url }}" target="_blank" rel="noopener">
+          {{ event.source_title or 'Wikipedia kaynağı' }}
+        </a>
+        {% endif %}
+        {% if event.image_credit_url and event.image_credit_url != event.source_url %}
+        <a class="button button--link" href="{{ event.image_credit_url }}" target="_blank" rel="noopener">
+          Görsel kaynağı
+        </a>
+        {% endif %}
+      </footer>
+    </article>
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="empty-state glass" data-animate>
+    <h3>Henüz içerik bulunamadı</h3>
+    <p>
+      Yönetim paneline giriş yapıp “Bugünün Olaylarını Yenile” düğmesiyle güncel
+      haberleri yükleyebilir veya özel içerikler ekleyebilirsiniz.
+    </p>
+    <a class="button" href="{{ url_for('admin_login') }}">Yönetim paneline git</a>
+  </div>
+  {% endif %}
+</section>
+{% endblock %}

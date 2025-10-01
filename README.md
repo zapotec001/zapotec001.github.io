@@ -1,27 +1,48 @@
-# Tarihte Bugün
+# Tarihte Bugün – Yönetilebilir Tarih Akışı
 
-Minimal ve şık tasarımlı bu web sayfası, Wikipedia'nın Türkçe "Tarihte Bugün" arşivinden çektiği içerikleri tamamen statik şekilde sunar. Her olay kartı, ilgili maddelere düzgün bağlantılar ve varsa öne çıkan görsellerle birlikte gelir.
+Bu proje, Wikipedia'nın Türkçe “Tarihte Bugün” beslemesinden aldığı içerikleri cam etkili bir arayüzle sergileyen ve aynı zamanda yönetici paneli üzerinden tamamen kontrol edilebilir hale getiren bir Flask uygulamasıdır. İster otomatik olarak gelen olayları kullanın ister kendi haberlerinizi ekleyin; tüm bağlantılar temizlenir, görseller desteklenir ve düzenlemeler kolayca yapılır.
 
-## Özellikler
-- Türkçe Wikipedia "On This Day" API'sinden (events, births, deaths, holidays, observances) günlük verilerin çekilmesi
-- Uzun metinler filtrelenerek kısa ve anlaşılır kartların gösterilmesi
-- Olay kartlarında bağlantıların HTML etiketleri olmadan temiz bir şekilde sunulması
-- İlgili maddelerden bulunan görsellerin (varsa) olay kartlarında yer alması
-- Minimal cam efektli tema, kategori rozetleri ve mobil uyumlu düzen
-- Tek tıkla yenileme düğmesi ile verilerin manuel olarak güncellenebilmesi
+## Öne Çıkan Özellikler
+- 🎯 **Dinamik içerik deposu:** Türkçe “On This Day” API’sinden çekilen olaylar JSON dosyasında saklanır; yönetici panelinden düzenlenebilir veya elle eklenebilir.
+- 🖼️ **Zengin kart tasarımları:** Her kart kategori rozetleri, yıl bilgisi, görsel (varsa) ve temiz bağlantılarla cam efekti tema üzerinde sunulur.
+- 🛠️ **Yönetim paneli:** /admin üzerinden giriş yaparak içerikleri listeleyebilir, düzenleyebilir, silebilir veya tek tuşla bugünün olaylarını yeniden çekebilirsiniz.
+- 🔒 **Basit erişim kontrolü:** Ortam değişkenleriyle kullanıcı adı ve şifreyi belirleyin; oturum açanlar için ek navigasyon öğeleri otomatik görünür.
+- ⚡ **Hızlı deneyim:** Uzun metinler filtrelenir, görsel bağlantıları normalize edilir ve ön uçta hafif animasyonlarla kullanıcı deneyimi güçlendirilir.
 
-## Geliştirme
-Proje saf HTML/CSS/JS'ten oluştuğu için yerelde hızlıca incelemek üzere herhangi bir statik sunucu yeterlidir:
+## Kurulum
+1. Gerekli bağımlılıkları yükleyin:
+   ```bash
+   python -m venv .venv
+   source .venv/bin/activate  # Windows için .venv\Scripts\activate
+   pip install flask
+   ```
+2. Ortam değişkenlerini ayarlayın (isteğe bağlı):
+   ```bash
+   export FLASK_APP=app.py
+   export ADMIN_USERNAME=admin        # Varsayılan: admin
+   export ADMIN_PASSWORD=admin123     # Varsayılan: admin123
+   export SECRET_KEY=bir-super-sir    # Varsayılan: dev-secret-key
+   ```
+3. Uygulamayı çalıştırın:
+   ```bash
+   flask run
+   ```
+   Ardından tarayıcınızdan [http://127.0.0.1:5000](http://127.0.0.1:5000) adresini açın.
 
-```bash
-python -m http.server 8000
-```
+## Yönetim Paneli
+- `/admin/login` adresinden belirlediğiniz kullanıcı adı ve şifre ile giriş yapın.
+- **Bugünün Olaylarını Yenile:** Wikipedia'dan en fazla sekiz olay çekilerek var olan listeyi günceller.
+- **Yeni içerik ekle:** Başlık, özet, yıl, kategori, görsel ve kaynak bağlantılarını içeren kartlar oluşturabilirsiniz.
+- **Düzenle / Sil:** Var olan kartları güncelleyin veya kalıcı olarak kaldırın. Silme işlemleri için tarayıcı onayı alınır.
 
-Ardından tarayıcınızda [`http://127.0.0.1:8000`](http://127.0.0.1:8000) adresini açın.
+Tüm içerikler `data/events.json` dosyasında `last_refreshed` meta bilgisiyle birlikte saklanır; elle düzenlemeniz gerekiyorsa formatı koruduğunuzdan emin olun.
 
-### GitHub Pages'e yayınlama
-1. Bu depoyu GitHub'da `main` dalına gönderin (push).
-2. Depo ayarlarından (Settings → Pages) kaynak olarak `main` ve `/` kök klasörünü seçin.
-3. Dakikalar içinde site `https://<kullanici-adiniz>.github.io/` adresinden erişilebilir olur.
+## Statik Ön İzleme
+Depo kökündeki `index.html`, cam efekti temanın statik bir örneğini sunar ve GitHub Pages üzerinde bilgi amaçlı yayınlanabilir. Dinamik deneyim için Flask uygulamasını çalıştırmanız gerekir.
 
-İsteğe bağlı olarak `app.py` dosyası aynı verileri Flask ile servis ederek dinamik geliştirme senaryolarında kullanılabilir.
+## Geliştirme İpuçları
+- Yeni stiller eklerken `static/style.css` dosyasındaki değişkenleri kullanarak temayla uyum sağlayın.
+- JavaScript tarafında hafif animasyonlar ve formlarda silme onayı için `static/script.js` dosyasını güncelleyin.
+- Test amaçlı olarak `python -m compileall app.py` komutu ile sentaks kontrolü yapabilirsiniz.
+
+Katkılarınız ve geri bildirimleriniz için teşekkürler! 📬

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Yönetim Girişi - Tarihte Bugün{% endblock %}
+
+{% block content %}
+<section class="auth" data-animate>
+  <div class="glass auth__panel">
+    <h1>Yönetim Paneli</h1>
+    <p>İçerikleri düzenlemek için kullanıcı adı ve şifrenizi girin.</p>
+    <form method="post" class="form">
+      <label class="form__field">
+        <span>Kullanıcı adı</span>
+        <input type="text" name="username" autocomplete="username" required />
+      </label>
+      <label class="form__field">
+        <span>Şifre</span>
+        <input type="password" name="password" autocomplete="current-password" required />
+      </label>
+      <button type="submit" class="button">Giriş yap</button>
+    </form>
+  </div>
+</section>
+{% endblock %}

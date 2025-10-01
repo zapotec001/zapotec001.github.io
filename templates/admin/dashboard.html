@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Yönetim Paneli - Tarihte Bugün{% endblock %}
+
+{% block content %}
+<section class="dashboard" data-animate>
+  <div class="dashboard__header glass">
+    <div>
+      <h1>İçerik Yönetimi</h1>
+      <p>
+        Bugünün olaylarını görüntüleyin, düzenleyin veya yeni içerikler ekleyin.
+        {% if last_refreshed_human %}
+        Son otomatik güncelleme: <strong>{{ last_refreshed_human }}</strong>.
+        {% endif %}
+      </p>
+    </div>
+    <div class="dashboard__actions">
+      <form method="post" action="{{ url_for('admin_refresh') }}">
+        <button type="submit" class="button">Bugünün Olaylarını Yenile</button>
+      </form>
+      <a class="button button--ghost" href="{{ url_for('admin_new') }}">Yeni içerik ekle</a>
+    </div>
+  </div>
+
+  <div class="dashboard__table glass">
+    {% if events %}
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Başlık</th>
+          <th>Yıl</th>
+          <th>Kategori</th>
+          <th>Kaynak</th>
+          <th class="table__actions">İşlemler</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for event in events %}
+        <tr>
+          <td>
+            <strong>{{ event.title }}</strong>
+            {% if event.summary %}
+            <p class="table__summary">{{ event.summary }}</p>
+            {% endif %}
+          </td>
+          <td>{{ event.year or "-" }}</td>
+          <td>{{ event.category_label or event.category }}</td>
+          <td>
+            {% if event.source_url %}
+            <a href="{{ event.source_url }}" target="_blank" rel="noopener">{{ event.source_title or 'Bağlantı' }}</a>
+            {% else %}
+            Yok
+            {% endif %}
+          </td>
+          <td class="table__actions">
+            <a class="button button--small" href="{{ url_for('admin_edit', event_id=event.id) }}">Düzenle</a>
+            <form
+              method="post"
+              action="{{ url_for('admin_delete', event_id=event.id) }}"
+              data-confirm
+              data-confirm-message="{{ event.title }} başlıklı içeriği silmek istediğinizden emin misiniz?"
+            >
+              <button type="submit" class="button button--danger button--small">Sil</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <h2>Hiç içerik yok</h2>
+      <p>
+        “Bugünün Olaylarını Yenile” düğmesini kullanarak Wikipedia’dan yeni
+        içerik çekebilir veya kendi haberlerinizi ekleyebilirsiniz.
+      </p>
+      <a class="button" href="{{ url_for('admin_new') }}">Yeni içerik ekle</a>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

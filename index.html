@@ -1,41 +1,167 @@
 <!DOCTYPE html>
 <html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tarihte Bugün</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
-    <link rel="stylesheet" type="text/css" href="static/style.css">
-    <script defer src="static/script.js"></script>
-</head>
-<body>
-    <header class="hero">
-        <nav class="nav">
-            <div class="logo">Tarihte Bugün</div>
-            <div class="today" data-date></div>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tarihte Bugün - Yönetilebilir Haber Akışı</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="static/style.css" />
+    <script src="static/script.js" defer></script>
+  </head>
+  <body class="page">
+    <header class="site-header" data-animate>
+      <div class="site-header__inner">
+        <span class="brand">Tarihte Bugün</span>
+        <nav class="site-nav">
+          <a href="#icerikler">Anasayfa</a>
+          <a href="#panel" class="link-muted">Yönetim</a>
         </nav>
-        <div class="hero-content">
-            <h1>Bugün Tarihte Neler Oldu?</h1>
-            <p>Wikipedia'nın "Tarihte Bugün" arşivinden reklam içermeyen, kısa ve anlaşılır başlıca olayları keşfedin.</p>
-            <button class="refresh" type="button" data-refresh>
-                Bugünün olaylarını yenile
-            </button>
-        </div>
+      </div>
     </header>
 
-    <main>
-        <section class="events" id="events" aria-live="polite">
-            <div class="empty-state" id="status" role="status">
-                <h2>Olaylar yükleniyor</h2>
-                <p>Wikipedia'nın Tarihte Bugün arşivi çağrılıyor...</p>
+    <main class="page__content">
+      <section class="hero" data-animate>
+        <div class="hero__content">
+          <p class="hero__eyebrow">Canlı örnek</p>
+          <h1>Yönetilebilir “Tarihte Bugün” Deneyimi</h1>
+          <p class="hero__lead">
+            Bu depo, Wikipedia'nın Türkçe “Tarihte Bugün” beslemesinden öne çıkan
+            olayları çekip cam efektli bir arayüzde sergileyen Flask tabanlı bir
+            uygulama sağlar. Yönetim panelinden içerik ekleyebilir, düzenleyebilir
+            veya silebilirsiniz.
+          </p>
+          <div class="hero__meta">
+            <span class="meta-item">
+              <strong>Statik ön izleme</strong>
+              <span>Bu sayfa örnek veriler içerir</span>
+            </span>
+            <span class="meta-item">
+              <strong>Şu an saat:</strong>
+              <span data-clock aria-live="polite">--:--</span>
+            </span>
+          </div>
+          <div class="hero__actions">
+            <a class="button" href="#icerikler">Örnek olayları gör</a>
+            <a class="button button--ghost" href="#panel">Yönetim paneli</a>
+          </div>
+        </div>
+      </section>
+
+      <section class="events" id="icerikler">
+        <div class="section-heading" data-animate>
+          <h2>Örnek İçerikler</h2>
+          <p>
+            Gerçek uygulamada bu kartlar Wikipedia'dan alınan güncel içerikler ve
+            yönetim panelinden girilen özel haberlerle değiştirilebilir.
+          </p>
+        </div>
+        <div class="events__grid">
+          <article class="event-card glass" data-animate>
+            <header class="event-card__header">
+              <span class="event-card__badge">Olay</span>
+              <span class="event-card__year">1920</span>
+            </header>
+            <figure class="event-card__figure">
+              <img
+                src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/TBMM_acilisi.jpg/640px-TBMM_acilisi.jpg"
+                alt="Türkiye Büyük Millet Meclisi'nin açılışı"
+                loading="lazy"
+              />
+              <figcaption>TBMM, Ankara'da görkemli bir törenle açıldı.</figcaption>
+            </figure>
+            <div class="event-card__body">
+              <h3>Türkiye Büyük Millet Meclisi açıldı</h3>
+              <p>
+                Mustafa Kemal Paşa'nın çağrısıyla Ankara'da toplanan Birinci Meclis,
+                Türk Kurtuluş Savaşı'nı yönetecek yasama organı olarak göreve
+                başladı.
+              </p>
+              <p class="event-card__date">23 Nisan 1920</p>
             </div>
-        </section>
+            <footer class="event-card__footer">
+              <a
+                class="button button--link"
+                href="https://tr.wikipedia.org/wiki/T%C3%BCrkiye_B%C3%BCy%C3%BCk_Millet_Meclisi"
+                target="_blank"
+                rel="noopener"
+                >Wikipedia kaynağı</a
+              >
+            </footer>
+          </article>
+
+          <article class="event-card glass" data-animate>
+            <header class="event-card__header">
+              <span class="event-card__badge">Öne Çıkanlar</span>
+              <span class="event-card__year">1961</span>
+            </header>
+            <div class="event-card__body">
+              <h3>İlk insanlı uzay uçuşu başarıyla tamamlandı</h3>
+              <p>
+                Yuri Gagarin, Vostok 1 kapsülü ile Dünya yörüngesine çıkarak uzaya
+                giden ilk insan oldu ve 108 dakikalık bir uçuş gerçekleştirdi.
+              </p>
+              <p class="event-card__date">12 Nisan 1961</p>
+            </div>
+            <footer class="event-card__footer">
+              <a
+                class="button button--link"
+                href="https://tr.wikipedia.org/wiki/Yuri_Gagarin"
+                target="_blank"
+                rel="noopener"
+                >Wikipedia kaynağı</a
+              >
+            </footer>
+          </article>
+        </div>
+      </section>
+
+      <section class="events" id="panel">
+        <div class="section-heading" data-animate>
+          <h2>Yönetim Paneli Özellikleri</h2>
+          <p>
+            <strong>app.py</strong> dosyasındaki Flask uygulamasını çalıştırarak
+            /admin adresinden şu işlemleri yapabilirsiniz:
+          </p>
+        </div>
+        <div class="events__grid">
+          <article class="event-card glass" data-animate>
+            <div class="event-card__body">
+              <h3>Otomatik veri yenileme</h3>
+              <p>
+                Tek tıkla Wikipedia'dan bugüne ait en fazla sekiz olayı çekip cam
+                efektli kartlara dönüştürün. Uzun metinler filtrelenir, görseller ve
+                bağlantılar otomatik temizlenir.
+              </p>
+            </div>
+          </article>
+          <article class="event-card glass" data-animate>
+            <div class="event-card__body">
+              <h3>El ile düzenleme ve ekleme</h3>
+              <p>
+                Her kartın başlığını, özetini, görselini ve kaynak bağlantısını
+                güncelleyebilir veya yeni içerikler oluşturabilirsiniz. Silme
+                işlemleri için ek onay alınır.
+              </p>
+            </div>
+          </article>
+        </div>
+      </section>
     </main>
 
-    <footer>
-        <p>Veriler <a href="https://www.wikipedia.org/" target="_blank" rel="noopener">Wikipedia</a>'dan alınmıştır.</p>
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>© <span class="brand">Tarihte Bugün</span> – Yönetilebilir tarih akışı.</p>
+        <p>
+          Yerel geliştirme için <code>python -m flask --app app.py run</code>
+          komutunu çalıştırın ve <code>ADMIN_PASSWORD</code> ortam değişkeniyle
+          giriş bilgilerinizi özelleştirin.
+        </p>
+      </div>
     </footer>
-</body>
+  </body>
 </html>

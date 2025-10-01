@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="tr">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{% block title %}Tarihte Bugün{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+  </head>
+  <body class="page">
+    <header class="site-header" data-animate>
+      <div class="site-header__inner">
+        <a class="brand" href="{{ url_for('home') }}">Tarihte Bugün</a>
+        <nav class="site-nav">
+          <a href="{{ url_for('home') }}">Anasayfa</a>
+          {% if session.get('is_authenticated') %}
+          <a href="{{ url_for('admin_dashboard') }}">Yönetim</a>
+          <a href="{{ url_for('admin_logout') }}" class="link-muted">Çıkış</a>
+          {% else %}
+          <a href="{{ url_for('admin_login') }}" class="link-muted">Giriş</a>
+          {% endif %}
+        </nav>
+      </div>
+    </header>
+
+    <main id="main" class="page__content">
+      {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+      <div class="flash-container" role="status">
+        {% for category, message in messages %}
+        <div class="flash flash--{{ category }}" data-animate>{{ message }}</div>
+        {% endfor %}
+      </div>
+      {% endif %}
+      {% endwith %}
+
+      {% block content %}{% endblock %}
+    </main>
+
+    <footer class="site-footer">
+      <div class="site-footer__inner">
+        <p>
+          <span aria-hidden="true">©</span>
+          <span>{{ datetime.utcnow().year }}</span>
+          <span class="brand">Tarihte Bugün</span>
+        </p>
+        <p>
+          Veriler Türkçe Wikipedia “On This Day” beslemesinden alınır ve yönetim
+          paneli ile düzenlenebilir.
+        </p>
+      </div>
+    </footer>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+  </body>
+</html>
